@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kamca v3.7 - Mobile Elite</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root { --vurgu: #d35400; --arka-plan: #121212; --kart-plan: #1e1e1e; --kagit: #fdfcf0; }
+        
+        body { 
+            background-color: var(--arka-plan); 
+            color: #ecf0f1; 
+            font-family: 'Segoe UI', sans-serif; 
+            margin: 0; 
+            padding: 15px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+        }
+
+        .main-card {
+            background: var(--kart-plan);
+            padding: 25px;
+            border-radius: 15px;
+            width: 100%;
+            max-width: 900px;
+            box-sizing: border-box;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+        }
+
+        h1 { text-align: center; color: var(--vurgu); letter-spacing: 5px; font-size: 1.8em; }
+
+        textarea { 
+            width: 100%; 
+            height: 100px; 
+            background: #2d2d2d; 
+            color: #fff; 
+            border: 2px solid #3d3d3d; 
+            border-radius: 10px; 
+            padding: 15px; 
+            font-size: 18px; 
+            box-sizing: border-box; 
+            margin-bottom: 15px;
+            resize: none;
+        }
+
+        #paylasBtn {
+            width: 100%;
+            background-color: var(--vurgu);
+            color: white;
+            border: none;
+            padding: 15px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        /* ÇIKTI ALANI - MOBİL UYUMLU VE SIKIŞTIRILMIŞ */
+        #cikti-paneli {
+            background-color: var(--kagit);
+            border-radius: 10px;
+            padding: 30px 15px; /* Kenar boşlukları azaltıldı */
+            min-height: 150px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            /* KELİME BOŞLUĞU BURADA (80'den 35'e düştü) */
+            gap: 35px; 
+            box-shadow: inset 0 0 40px rgba(0,0,0,0.15);
+        }
+
+        .kelime-kutusu { display: flex; flex-wrap: nowrap; align-items: center; }
+
+        .kamca-harf {
+            height: 45px; /* Mobilde daha iyi sığması için harfleri biraz küçülttük */
+            width: auto;
+            margin: 0 1px;
+        }
+
+        /* Bilgisayar ekranı için harfleri biraz büyütelim */
+        @media (min-width: 768px) {
+            .kamca-harf { height: 60px; }
+            #cikti-paneli { padding: 50px; gap: 40px; }
+            h1 { font-size: 2.5em; }
+        }
+
+        .bilinmeyen { font-size: 25px; color: #333; margin: 0 3px; font-weight: bold; }
+
+        #onizleme-alani { margin-top: 20px; text-align: center; display: none; }
+        #onizleme-alani img { max-width: 100%; border: 3px solid var(--vurgu); border-radius: 10px; }
+        .footer { margin-top: 20px; font-size: 11px; opacity: 0.3; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <div class="main-card">
+        <h1>KAMCA ALFABESİ</h1>
+        <textarea id="metinGiris" oninput="kamcayaCevir()" placeholder="Mesajınızı buraya dökün..."></textarea>
+        <button id="paylasBtn" onclick="resimKaydet()">📸 RESİM OLARAK İNDİR</button>
+        <div id="cikti-paneli"></div>
+        <div id="onizleme-alani">
+            <p style="color: #2ecc71; font-size: 14px;">✅ Resim Hazır! İndirme başlamadıysa üstüne basılı tutup kaydedin.</p>
+            <div id="resimSonuc"></div>
+        </div>
+    </div>
+    <div class="footer">v3.7 Mobile & Compact Edition</div>
+
+    <script>
+        function kamcayaCevir() {
+            const metin = document.getElementById('metinGiris').value;
+            const cikti = document.getElementById('cikti-paneli');
+            cikti.innerHTML = ''; 
+            document.getElementById('onizleme-alani').style.display = 'none';
+
+            if(!metin.trim()) return;
+
+            metin.split(/\s+/).forEach(kelime => {
+                const kelimeDiv = document.createElement('div');
+                kelimeDiv.className = 'kelime-kutusu';
+                for (let harf of kelime) {
+                    let dosya = getHarfDosyasi(harf);
+                    if (dosya) {
+                        const img = document.createElement('img');
+                        img.src = dosya + "?v=" + Math.random();
+                        img.className = 'kamca-harf';
+                        img.onerror = function() { this.style.display = 'none'; ekleNormal(kelimeDiv, harf); };
+                        kelimeDiv.appendChild(img);
+                    } else { ekleNormal(kelimeDiv, harf); }
+                }
+                cikti.appendChild(kelimeDiv);
+            });
+        }
+
+        function ekleNormal(div, h) {
+            const span = document.createElement('span');
+            span.innerText = h; span.className = 'bilinmeyen'; div.appendChild(span);
+        }
+
+        function getHarfDosyasi(h) {
+            // Senin klasöründeki düzeltilmiş harita
+            const map = {
+                'a': 'a.png', 'A': 'a.png', 'b': 'b.PNG', 'B': 'b.PNG', 'c': 'c.PNG', 'C': 'c.PNG',
+                'ç': 'c-alt.PNG', 'Ç': 'c-alt.PNG', 'd': 'd.PNG', 'D': 'd.PNG', 'e': 'e.PNG', 'E': 'e.PNG',
+                'f': 'f.PNG', 'F': 'f.PNG', 'g': 'g.PNG', 'G': 'g.PNG', 'ğ': 'g-alt.PNG', 'Ğ': 'g-alt.PNG',
+                'h': 'h.PNG', 'H': 'h.PNG', 'ı': 'i.PNG', 'I': 'i.PNG', 'i': 'i.png', 'İ': 'i.png',
+                'j': 'j.PNG', 'J': 'j.PNG', 'k': 'k.PNG', 'K': 'k.PNG', 'l': 'l.PNG', 'L': 'l.PNG',
+                'm': 'm.PNG', 'M': 'm.PNG', 'n': 'n.PNG', 'N': 'n.PNG', 'o': 'o.PNG', 'O': 'o.PNG',
+                'ö': 'o-alt.PNG', 'Ö': 'o-alt.PNG', 'p': 'p.PNG', 'P': 'p.PNG', 'r': 'r.PNG', 'R': 'r.PNG',
+                's': 's.PNG', 'S': 's.PNG', 'ş': 's-alt.PNG', 'Ş': 's-alt.PNG', 't': 't.PNG', 'T': 't.PNG',
+                'u': 'u.PNG', 'U': 'u.PNG', 'ü': 'u-alt.PNG', 'Ü': 'u-alt.PNG', 'v': 'v.PNG', 'V': 'v.PNG',
+                'y': 'y.PNG', 'Y': 'y.PNG', 'z': 'z.PNG', 'Z': 'z.PNG'
+            };
+            return map[h] || null;
+        }
+
+        async function resimKaydet() {
+            const panel = document.getElementById('cikti-paneli');
+            const buton = document.getElementById('paylasBtn');
+            const girisText = document.getElementById('metinGiris').value.trim();
+            if(!girisText) return;
+
+            buton.innerText = "⏳ HAZIRLANIYOR...";
+            buton.disabled = true;
+
+            let temizIsim = girisText.replace(/[^a-z0-9İıÇçŞşĞğÜüÖö]/gi, '_').substring(0, 15);
+            
+            await new Promise(r => setTimeout(r, 600));
+
+            html2canvas(panel, { backgroundColor: "#fdfcf0", scale: 2, useCORS: true }).then(canvas => {
+                const imgData = canvas.toDataURL("image/png");
+                const link = document.createElement('a');
+                link.download = temizIsim + '_kamca.png';
+                link.href = imgData;
+                link.click();
+                document.getElementById('resimSonuc').innerHTML = `<img src="${imgData}">`;
+                document.getElementById('onizleme-alani').style.display = 'block';
+                buton.innerText = "✅ İNDİRİLDİ";
+                setTimeout(() => { buton.innerText = "📸 RESİM OLARAK İNDİR"; buton.disabled = false; }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
